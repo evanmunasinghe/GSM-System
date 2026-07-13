@@ -2,13 +2,31 @@
 
 namespace App\Models;
 
-use Stancl\Tenancy\Contracts\TenantWithDatabase;
-use Stancl\Tenancy\Database\Concerns\HasDatabase;
-use Stancl\Tenancy\Database\Concerns\HasDomains;
 use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
+use Stancl\Tenancy\Database\Concerns\HasDomains;
 
-class Tenant extends BaseTenant //implements TenantWithDatabase
+class Tenant extends BaseTenant
 {
-    //use HasDatabase;
     use HasDomains;
+
+    public static function getCustomColumns(): array
+    {
+        return [
+            'id',
+            'com_name',
+            'address',
+            'tel',
+            'email',
+            'logo',
+            'tag',
+            'admin',
+            'contact',
+            'ant',
+        ];
+    }
+
+    public function users()
+    {
+        return $this->hasMany(User::class);
+    }
 }
