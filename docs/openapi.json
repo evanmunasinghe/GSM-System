@@ -1,0 +1,1436 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "FleeV Garage Management API",
+    "version": "1.0.0",
+    "description": "Proposed API contract derived from the FleeV database migrations and ER diagram. Database CRUD controllers are not implemented yet. Tenant-scoped writes infer tenant_id from the authenticated tenant context."
+  },
+  "servers": [
+    {
+      "url": "http://{tenant}.localhost/api",
+      "description": "Local tenant API",
+      "variables": {
+        "tenant": {
+          "default": "davesautos",
+          "description": "Tenant domain prefix"
+        }
+      }
+    },
+    {
+      "url": "https://{tenant}.fleev.lk/api",
+      "description": "Production tenant API",
+      "variables": {
+        "tenant": {
+          "default": "demo",
+          "description": "Tenant domain prefix"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "tags": [
+    { "name": "Tenants" },
+    { "name": "Users" },
+    { "name": "Customers" },
+    { "name": "Vehicles" },
+    { "name": "Owners" },
+    { "name": "Documents" },
+    { "name": "Insurance" },
+    { "name": "Facilities" },
+    { "name": "Accessories" },
+    { "name": "Maintenance" },
+    { "name": "Repairs" },
+    { "name": "Companies" }
+  ],
+  "paths": {
+    "/tenants": {
+      "get": {
+        "tags": ["Tenants"],
+        "summary": "List tenants",
+        "operationId": "listTenants",
+        "responses": {
+          "200": {
+            "description": "Tenant list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Tenant" }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" }
+        }
+      },
+      "post": {
+        "tags": ["Tenants"],
+        "summary": "Create a tenant",
+        "operationId": "createTenant",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TenantWrite" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tenant created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Tenant" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/tenants/{tenantId}": {
+      "parameters": [
+        { "$ref": "#/components/parameters/TenantId" }
+      ],
+      "get": {
+        "tags": ["Tenants"],
+        "summary": "Get a tenant",
+        "operationId": "getTenant",
+        "responses": {
+          "200": {
+            "description": "Tenant details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Tenant" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "patch": {
+        "tags": ["Tenants"],
+        "summary": "Update a tenant",
+        "operationId": "updateTenant",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TenantWrite" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tenant updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Tenant" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      },
+      "delete": {
+        "tags": ["Tenants"],
+        "summary": "Delete a tenant and its tenant-owned records",
+        "operationId": "deleteTenant",
+        "responses": {
+          "204": { "$ref": "#/components/responses/NoContent" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/users": {
+      "get": {
+        "tags": ["Users"],
+        "summary": "List tenant users",
+        "operationId": "listUsers",
+        "responses": {
+          "200": {
+            "description": "User list without password hashes",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/User" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Users"],
+        "summary": "Create a tenant user",
+        "operationId": "createUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserWrite" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/users/{id}": {
+      "parameters": [
+        { "$ref": "#/components/parameters/RecordId" }
+      ],
+      "get": {
+        "tags": ["Users"],
+        "summary": "Get a tenant user",
+        "operationId": "getUser",
+        "responses": {
+          "200": {
+            "description": "User details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "patch": {
+        "tags": ["Users"],
+        "summary": "Update a tenant user",
+        "operationId": "updateUser",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserWrite" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/User" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      },
+      "delete": {
+        "tags": ["Users"],
+        "summary": "Delete a tenant user",
+        "operationId": "deleteUser",
+        "responses": {
+          "204": { "$ref": "#/components/responses/NoContent" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/customers": {
+      "get": {
+        "tags": ["Customers"],
+        "summary": "List customers",
+        "operationId": "listCustomers",
+        "responses": {
+          "200": {
+            "description": "Customer list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Customer" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Customers"],
+        "summary": "Create a customer",
+        "operationId": "createCustomer",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CustomerWrite" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Customer created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Customer" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/customers/{id}": {
+      "parameters": [
+        { "$ref": "#/components/parameters/RecordId" }
+      ],
+      "get": {
+        "tags": ["Customers"],
+        "summary": "Get a customer",
+        "operationId": "getCustomer",
+        "responses": {
+          "200": {
+            "description": "Customer details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Customer" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "patch": {
+        "tags": ["Customers"],
+        "summary": "Update a customer",
+        "operationId": "updateCustomer",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CustomerWrite" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Customer updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Customer" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      },
+      "delete": {
+        "tags": ["Customers"],
+        "summary": "Delete a customer",
+        "operationId": "deleteCustomer",
+        "responses": {
+          "204": { "$ref": "#/components/responses/NoContent" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/vehicles": {
+      "get": {
+        "tags": ["Vehicles"],
+        "summary": "List vehicles",
+        "operationId": "listVehicles",
+        "parameters": [
+          {
+            "name": "plate",
+            "in": "query",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Vehicle list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Vehicle" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Vehicles"],
+        "summary": "Create a vehicle",
+        "operationId": "createVehicle",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VehicleWrite" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Vehicle created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Vehicle" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/vehicles/{vehicleId}": {
+      "parameters": [
+        { "$ref": "#/components/parameters/VehicleId" }
+      ],
+      "get": {
+        "tags": ["Vehicles"],
+        "summary": "Get a vehicle",
+        "operationId": "getVehicle",
+        "responses": {
+          "200": {
+            "description": "Vehicle details",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Vehicle" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "patch": {
+        "tags": ["Vehicles"],
+        "summary": "Update a vehicle",
+        "operationId": "updateVehicle",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VehicleWrite" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Vehicle updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Vehicle" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      },
+      "delete": {
+        "tags": ["Vehicles"],
+        "summary": "Delete a vehicle and its dependent records",
+        "operationId": "deleteVehicle",
+        "responses": {
+          "204": { "$ref": "#/components/responses/NoContent" },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      }
+    },
+    "/vehicles/{vehicleId}/current-owner": {
+      "parameters": [
+        { "$ref": "#/components/parameters/VehicleId" }
+      ],
+      "get": {
+        "tags": ["Owners"],
+        "summary": "Get the current owner",
+        "operationId": "getCurrentOwner",
+        "responses": {
+          "200": {
+            "description": "Current owner",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OwnerCurrent" }
+              }
+            }
+          },
+          "404": { "$ref": "#/components/responses/NotFound" }
+        }
+      },
+      "put": {
+        "tags": ["Owners"],
+        "summary": "Create or replace the current owner",
+        "operationId": "putCurrentOwner",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OwnerCurrentWrite" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Current owner saved",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OwnerCurrent" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/vehicles/{vehicleId}/owner-history": {
+      "parameters": [
+        { "$ref": "#/components/parameters/VehicleId" }
+      ],
+      "get": {
+        "tags": ["Owners"],
+        "summary": "List previous owners",
+        "operationId": "listOwnerHistory",
+        "responses": {
+          "200": {
+            "description": "Previous owner records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/OwnerPast" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Owners"],
+        "summary": "Add a previous owner record",
+        "operationId": "createOwnerHistory",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/OwnerPastWrite" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Previous owner record created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/OwnerPast" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/vehicles/{vehicleId}/documents": {
+      "parameters": [
+        { "$ref": "#/components/parameters/VehicleId" }
+      ],
+      "get": {
+        "tags": ["Documents"],
+        "summary": "List vehicle documents",
+        "operationId": "listVehicleDocuments",
+        "responses": {
+          "200": {
+            "description": "Vehicle documents",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/VehicleDocument" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Documents"],
+        "summary": "Add a vehicle document",
+        "operationId": "createVehicleDocument",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VehicleDocumentWrite" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Vehicle document created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VehicleDocument" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/vehicles/{vehicleId}/insurance-history": {
+      "parameters": [
+        { "$ref": "#/components/parameters/VehicleId" }
+      ],
+      "get": {
+        "tags": ["Insurance"],
+        "summary": "List vehicle insurance history",
+        "operationId": "listVehicleInsurance",
+        "responses": {
+          "200": {
+            "description": "Insurance records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/VehicleInsurance" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Insurance"],
+        "summary": "Add a vehicle insurance record",
+        "operationId": "createVehicleInsurance",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VehicleInsuranceWrite" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Insurance record created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VehicleInsurance" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/vehicles/{vehicleId}/facilities": {
+      "parameters": [
+        { "$ref": "#/components/parameters/VehicleId" }
+      ],
+      "get": {
+        "tags": ["Facilities"],
+        "summary": "List vehicle finance or facility records",
+        "operationId": "listVehicleFacilities",
+        "responses": {
+          "200": {
+            "description": "Facility records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/VehicleFacility" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Facilities"],
+        "summary": "Add a vehicle facility record",
+        "operationId": "createVehicleFacility",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VehicleFacilityWrite" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Facility record created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VehicleFacility" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/vehicles/{vehicleId}/accessories": {
+      "parameters": [
+        { "$ref": "#/components/parameters/VehicleId" }
+      ],
+      "get": {
+        "tags": ["Accessories"],
+        "summary": "List vehicle accessories",
+        "operationId": "listVehicleAccessories",
+        "responses": {
+          "200": {
+            "description": "Accessory records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/VehicleAccessory" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Accessories"],
+        "summary": "Add a vehicle accessory",
+        "operationId": "createVehicleAccessory",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VehicleAccessoryWrite" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Accessory record created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VehicleAccessory" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/maintenance-services": {
+      "get": {
+        "tags": ["Maintenance"],
+        "summary": "List maintenance service definitions",
+        "operationId": "listMaintenanceServices",
+        "responses": {
+          "200": {
+            "description": "Maintenance services",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/MaintenanceService" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Maintenance"],
+        "summary": "Create a maintenance service definition",
+        "operationId": "createMaintenanceService",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/MaintenanceServiceWrite" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Maintenance service created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/MaintenanceService" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/vehicles/{vehicleId}/maintenance/due": {
+      "parameters": [
+        { "$ref": "#/components/parameters/VehicleId" }
+      ],
+      "get": {
+        "tags": ["Maintenance"],
+        "summary": "List due maintenance",
+        "operationId": "listDueMaintenance",
+        "responses": {
+          "200": {
+            "description": "Due maintenance records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/VehicleMaintenanceDue" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Maintenance"],
+        "summary": "Schedule maintenance",
+        "operationId": "createDueMaintenance",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VehicleMaintenanceDueWrite" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Maintenance scheduled",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VehicleMaintenanceDue" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/vehicles/{vehicleId}/maintenance/history": {
+      "parameters": [
+        { "$ref": "#/components/parameters/VehicleId" }
+      ],
+      "get": {
+        "tags": ["Maintenance"],
+        "summary": "List completed maintenance",
+        "operationId": "listMaintenanceHistory",
+        "responses": {
+          "200": {
+            "description": "Maintenance history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/VehicleMaintenancePast" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Maintenance"],
+        "summary": "Record completed maintenance",
+        "operationId": "createMaintenanceHistory",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VehicleMaintenancePastWrite" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Maintenance history created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VehicleMaintenancePast" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/vehicles/{vehicleId}/repairs/due": {
+      "parameters": [
+        { "$ref": "#/components/parameters/VehicleId" }
+      ],
+      "get": {
+        "tags": ["Repairs"],
+        "summary": "List due repairs",
+        "operationId": "listDueRepairs",
+        "responses": {
+          "200": {
+            "description": "Due repair records",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/VehicleRepair" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Repairs"],
+        "summary": "Schedule a repair",
+        "operationId": "createDueRepair",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VehicleRepairWrite" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Repair scheduled",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VehicleRepair" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/vehicles/{vehicleId}/repairs/history": {
+      "parameters": [
+        { "$ref": "#/components/parameters/VehicleId" }
+      ],
+      "get": {
+        "tags": ["Repairs"],
+        "summary": "List repair history",
+        "operationId": "listRepairHistory",
+        "responses": {
+          "200": {
+            "description": "Repair history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/VehicleRepair" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Repairs"],
+        "summary": "Record a completed repair",
+        "operationId": "createRepairHistory",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/VehicleRepairWrite" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Repair history created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/VehicleRepair" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    },
+    "/companies": {
+      "get": {
+        "tags": ["Companies"],
+        "summary": "List companies",
+        "operationId": "listCompanies",
+        "responses": {
+          "200": {
+            "description": "Company list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Company" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Companies"],
+        "summary": "Create a company",
+        "operationId": "createCompany",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CompanyWrite" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Company created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Company" }
+              }
+            }
+          },
+          "422": { "$ref": "#/components/responses/ValidationError" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "OAuth2 access token"
+      }
+    },
+    "parameters": {
+      "TenantId": {
+        "name": "tenantId",
+        "in": "path",
+        "required": true,
+        "description": "Tenant slug or generated tenant identifier",
+        "schema": { "type": "string" }
+      },
+      "RecordId": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "integer", "format": "int64", "minimum": 1 }
+      },
+      "VehicleId": {
+        "name": "vehicleId",
+        "in": "path",
+        "required": true,
+        "schema": { "type": "integer", "format": "int64", "minimum": 1 }
+      }
+    },
+    "responses": {
+      "NoContent": {
+        "description": "Deleted successfully"
+      },
+      "Unauthorized": {
+        "description": "Missing or invalid access token",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found in the current tenant",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/Error" }
+          }
+        }
+      },
+      "ValidationError": {
+        "description": "Request validation failed",
+        "content": {
+          "application/json": {
+            "schema": { "$ref": "#/components/schemas/ValidationError" }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": { "type": "string" }
+        }
+      },
+      "ValidationError": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Error" },
+          {
+            "type": "object",
+            "properties": {
+              "errors": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "Tenant": {
+        "allOf": [
+          { "$ref": "#/components/schemas/TenantWrite" },
+          {
+            "type": "object",
+            "required": ["created_at", "updated_at"],
+            "properties": {
+              "created_at": { "type": "string", "format": "date-time", "readOnly": true },
+              "updated_at": { "type": "string", "format": "date-time", "readOnly": true }
+            }
+          }
+        ]
+      },
+      "TenantWrite": {
+        "type": "object",
+        "required": ["id", "com_name"],
+        "properties": {
+          "id": { "type": "string", "example": "davesautos" },
+          "com_name": { "type": "string" },
+          "address": { "type": ["string", "null"] },
+          "tel": { "type": ["string", "null"] },
+          "email": { "type": ["string", "null"], "format": "email" },
+          "logo": { "type": ["string", "null"] },
+          "tag": { "type": ["string", "null"] },
+          "admin": { "type": ["string", "null"] },
+          "contact": { "type": ["string", "null"] },
+          "ant": { "type": ["string", "null"] }
+        }
+      },
+      "User": {
+        "type": "object",
+        "required": ["id", "tenant_id", "user", "email", "type", "created_at", "updated_at"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64", "readOnly": true },
+          "tenant_id": { "type": "string", "readOnly": true },
+          "user": { "type": "string" },
+          "eid": { "type": ["integer", "null"] },
+          "email": { "type": "string", "format": "email" },
+          "type": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time", "readOnly": true },
+          "updated_at": { "type": "string", "format": "date-time", "readOnly": true }
+        }
+      },
+      "UserWrite": {
+        "type": "object",
+        "required": ["user", "password", "email", "type"],
+        "properties": {
+          "user": { "type": "string" },
+          "eid": { "type": ["integer", "null"] },
+          "password": { "type": "string", "format": "password", "writeOnly": true, "minLength": 8 },
+          "email": { "type": "string", "format": "email" },
+          "type": { "type": "string" }
+        }
+      },
+      "Customer": {
+        "allOf": [
+          { "$ref": "#/components/schemas/CustomerWrite" },
+          {
+            "type": "object",
+            "required": ["id", "tenant_id", "created_at", "updated_at"],
+            "properties": {
+              "id": { "type": "integer", "format": "int64", "readOnly": true },
+              "tenant_id": { "type": "string", "readOnly": true },
+              "created_at": { "type": "string", "format": "date-time", "readOnly": true },
+              "updated_at": { "type": "string", "format": "date-time", "readOnly": true }
+            }
+          }
+        ]
+      },
+      "CustomerWrite": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "email": { "type": ["string", "null"], "format": "email" },
+          "phone": { "type": ["string", "null"] }
+        }
+      },
+      "Vehicle": {
+        "allOf": [
+          { "$ref": "#/components/schemas/VehicleWrite" },
+          {
+            "type": "object",
+            "required": ["id", "tenant_id", "created_at", "updated_at"],
+            "properties": {
+              "id": { "type": "integer", "format": "int64", "readOnly": true },
+              "tenant_id": { "type": "string", "readOnly": true },
+              "created_at": { "type": "string", "format": "date-time", "readOnly": true },
+              "updated_at": { "type": "string", "format": "date-time", "readOnly": true }
+            }
+          }
+        ]
+      },
+      "VehicleWrite": {
+        "type": "object",
+        "required": ["plate", "make", "model"],
+        "properties": {
+          "plate": { "type": "string" },
+          "engine_no": { "type": ["string", "null"] },
+          "chassis_no": { "type": ["string", "null"] },
+          "owner_id": { "type": ["integer", "null"], "format": "int64" },
+          "ant": { "type": ["string", "null"] },
+          "vehicletype": { "type": ["string", "null"] },
+          "make": { "type": "string" },
+          "model": { "type": "string" },
+          "man_year": { "type": ["string", "null"] },
+          "reg_year": { "type": ["string", "null"] },
+          "colour": { "type": ["string", "null"] },
+          "country": { "type": ["string", "null"] },
+          "bookcopy": { "type": ["string", "null"] },
+          "odo": { "type": ["string", "null"] },
+          "next_rev": { "type": ["string", "null"], "format": "date" },
+          "next_ins": { "type": ["string", "null"], "format": "date" },
+          "ins_com": { "type": ["string", "null"] },
+          "next_emmission": { "type": ["string", "null"], "format": "date" },
+          "m_value": { "type": ["string", "null"] },
+          "regdate": { "type": ["string", "null"], "format": "date" }
+        }
+      },
+      "OwnerCurrent": {
+        "allOf": [
+          { "$ref": "#/components/schemas/OwnerCurrentWrite" },
+          {
+            "type": "object",
+            "required": ["id", "tenant_id", "vid", "created_at", "updated_at"],
+            "properties": {
+              "id": { "type": "integer", "format": "int64", "readOnly": true },
+              "tenant_id": { "type": "string", "readOnly": true },
+              "vid": { "type": "integer", "format": "int64", "readOnly": true },
+              "created_at": { "type": "string", "format": "date-time", "readOnly": true },
+              "updated_at": { "type": "string", "format": "date-time", "readOnly": true }
+            }
+          }
+        ]
+      },
+      "OwnerCurrentWrite": {
+        "type": "object",
+        "required": ["name", "mobile"],
+        "properties": {
+          "name": { "type": "string" },
+          "address": { "type": ["string", "null"] },
+          "mobile": { "type": "string" },
+          "email": { "type": ["string", "null"], "format": "email" },
+          "identification": { "type": ["string", "null"] },
+          "narration": { "type": ["string", "null"] }
+        }
+      },
+      "OwnerPast": {
+        "allOf": [
+          { "$ref": "#/components/schemas/OwnerPastWrite" },
+          {
+            "type": "object",
+            "required": ["id", "tenant_id", "vid", "created_at", "updated_at"],
+            "properties": {
+              "id": { "type": "integer", "format": "int64", "readOnly": true },
+              "tenant_id": { "type": "string", "readOnly": true },
+              "vid": { "type": "integer", "format": "int64", "readOnly": true },
+              "created_at": { "type": "string", "format": "date-time", "readOnly": true },
+              "updated_at": { "type": "string", "format": "date-time", "readOnly": true }
+            }
+          }
+        ]
+      },
+      "OwnerPastWrite": {
+        "type": "object",
+        "required": ["owner"],
+        "properties": {
+          "owner": { "type": "string" },
+          "date": { "type": ["string", "null"], "format": "date" },
+          "count": { "type": "integer", "minimum": 1, "default": 1 }
+        }
+      },
+      "VehicleDocument": {
+        "allOf": [
+          { "$ref": "#/components/schemas/VehicleDocumentWrite" },
+          { "$ref": "#/components/schemas/TenantVehicleRecord" }
+        ]
+      },
+      "VehicleDocumentWrite": {
+        "type": "object",
+        "required": ["doc", "file", "date"],
+        "properties": {
+          "doc": { "type": "string" },
+          "file": { "type": "string" },
+          "date": { "type": "string", "format": "date" }
+        }
+      },
+      "VehicleInsurance": {
+        "allOf": [
+          { "$ref": "#/components/schemas/VehicleInsuranceWrite" },
+          { "$ref": "#/components/schemas/TenantVehicleRecord" }
+        ]
+      },
+      "VehicleInsuranceWrite": {
+        "type": "object",
+        "required": ["inscom", "valuation", "insamount", "policy", "datefrom", "dateto"],
+        "properties": {
+          "inscom": { "type": "string" },
+          "valuation": { "type": "string" },
+          "insamount": { "type": "string" },
+          "policy": { "type": "string" },
+          "image": { "type": ["string", "null"] },
+          "datefrom": { "type": "string", "format": "date" },
+          "dateto": { "type": "string", "format": "date" }
+        }
+      },
+      "VehicleFacility": {
+        "allOf": [
+          { "$ref": "#/components/schemas/VehicleFacilityWrite" },
+          { "$ref": "#/components/schemas/TenantVehicleRecord" }
+        ]
+      },
+      "VehicleFacilityWrite": {
+        "type": "object",
+        "required": ["company", "valuation", "type", "startdate", "enddate"],
+        "properties": {
+          "company": { "type": "string" },
+          "valuation": { "type": "string" },
+          "type": { "type": "string" },
+          "startdate": { "type": "string", "format": "date" },
+          "enddate": { "type": "string", "format": "date" }
+        }
+      },
+      "VehicleAccessory": {
+        "allOf": [
+          { "$ref": "#/components/schemas/VehicleAccessoryWrite" },
+          { "$ref": "#/components/schemas/TenantVehicleRecord" }
+        ]
+      },
+      "VehicleAccessoryWrite": {
+        "type": "object",
+        "required": ["part", "date", "value"],
+        "properties": {
+          "part": { "type": "string" },
+          "date": { "type": "string", "format": "date" },
+          "value": { "type": "string" }
+        }
+      },
+      "MaintenanceService": {
+        "allOf": [
+          { "$ref": "#/components/schemas/MaintenanceServiceWrite" },
+          { "$ref": "#/components/schemas/TenantRecord" }
+        ]
+      },
+      "MaintenanceServiceWrite": {
+        "type": "object",
+        "required": ["service"],
+        "properties": {
+          "service": { "type": "string" },
+          "details": { "type": ["string", "null"] }
+        }
+      },
+      "VehicleMaintenanceDue": {
+        "allOf": [
+          { "$ref": "#/components/schemas/VehicleMaintenanceDueWrite" },
+          { "$ref": "#/components/schemas/TenantVehicleRecord" }
+        ]
+      },
+      "VehicleMaintenanceDueWrite": {
+        "type": "object",
+        "required": ["mid"],
+        "properties": {
+          "mid": { "type": "integer", "format": "int64" },
+          "mileage": { "type": ["string", "null"] }
+        }
+      },
+      "VehicleMaintenancePast": {
+        "allOf": [
+          { "$ref": "#/components/schemas/VehicleMaintenancePastWrite" },
+          { "$ref": "#/components/schemas/TenantVehicleRecord" }
+        ]
+      },
+      "VehicleMaintenancePastWrite": {
+        "type": "object",
+        "required": ["mid", "date_time"],
+        "properties": {
+          "mid": { "type": "integer", "format": "int64" },
+          "mileage": { "type": ["string", "null"] },
+          "date_time": { "type": "string", "format": "date-time" },
+          "description": { "type": ["string", "null"] }
+        }
+      },
+      "VehicleRepair": {
+        "allOf": [
+          { "$ref": "#/components/schemas/VehicleRepairWrite" },
+          { "$ref": "#/components/schemas/TenantVehicleRecord" }
+        ]
+      },
+      "VehicleRepairWrite": {
+        "type": "object",
+        "required": ["type", "details", "date", "status"],
+        "properties": {
+          "type": { "type": "string" },
+          "details": { "type": "string" },
+          "date": { "type": "string", "format": "date" },
+          "status": { "type": "string" }
+        }
+      },
+      "Company": {
+        "allOf": [
+          { "$ref": "#/components/schemas/CompanyWrite" },
+          {
+            "type": "object",
+            "required": ["id", "created_at", "updated_at"],
+            "properties": {
+              "id": { "type": "integer", "format": "int64", "readOnly": true },
+              "created_at": { "type": "string", "format": "date-time", "readOnly": true },
+              "updated_at": { "type": "string", "format": "date-time", "readOnly": true }
+            }
+          }
+        ]
+      },
+      "CompanyWrite": {
+        "type": "object",
+        "required": ["company", "type"],
+        "properties": {
+          "company": { "type": "string" },
+          "type": { "type": "string" }
+        }
+      },
+      "TenantRecord": {
+        "type": "object",
+        "required": ["id", "tenant_id", "created_at", "updated_at"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64", "readOnly": true },
+          "tenant_id": { "type": "string", "readOnly": true },
+          "created_at": { "type": "string", "format": "date-time", "readOnly": true },
+          "updated_at": { "type": "string", "format": "date-time", "readOnly": true }
+        }
+      },
+      "TenantVehicleRecord": {
+        "allOf": [
+          { "$ref": "#/components/schemas/TenantRecord" },
+          {
+            "type": "object",
+            "required": ["vid"],
+            "properties": {
+              "vid": { "type": "integer", "format": "int64", "readOnly": true }
+            }
+          }
+        ]
+      }
+    }
+  }
+}
