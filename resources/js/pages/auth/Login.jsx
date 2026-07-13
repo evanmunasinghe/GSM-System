@@ -42,7 +42,7 @@ export default function Login({
                                     <div className="alert alert-success">{flash.success}</div>
                                 )}
 
-                                {credentials && (
+                               {/* {credentials && (
                                     <div className="demo-credentials">
                                         <div>
                                             <strong>Development super admin</strong>
@@ -59,7 +59,7 @@ export default function Login({
                                             Use credentials
                                         </button>
                                     </div>
-                                )}
+                                )}*/}
 
                                 <form onSubmit={submit}>
                                     <div className="mb-3">
