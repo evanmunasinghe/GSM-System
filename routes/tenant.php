@@ -2,65 +2,29 @@
 
 declare(strict_types=1);
 
+use App\Models\Vehicle;
 use Illuminate\Support\Facades\Route;
-use App\Models\Customer;
+use Inertia\Inertia;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
-use App\Models\Vehicle;
-use Inertia\Inertia;
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard', [
+Route::middleware([
+    'web',
+    InitializeTenancyByDomain::class,
+    PreventAccessFromCentralDomains::class,
+])->group(function () {
+    Route::get('/login', fn () => Inertia::render('Login', [
+        'title' => 'Branch Portal Login',
+        'subtitle' => 'Login to manage this branch customers, vehicles, jobs, and invoices.',
+        'formAction' => url('/login'),
+        'homeUrl' => config('app.url'),
+    ]))->name('branch.login');
+
+    Route::get('/dashboard', fn () => Inertia::render('dashboard', [
+        'tenant' => [
+            'id' => tenant('id'),
+            'name' => tenant('com_name'),
+        ],
         'vehicles' => Vehicle::latest()->get(),
-    ]);
-});
-/*
-|--------------------------------------------------------------------------
-| Tenant Routes
-|--------------------------------------------------------------------------
-|
-| Here you can register the tenant routes for your application.
-| These routes are loaded by the TenantRouteServiceProvider.
-|
-| Feel free to customize them however you want. Good luck!
-|
-*/
-//route for dash board for branch portal
-Route::middleware([
-    'web',
-    InitializeTenancyByDomain::class,
-    PreventAccessFromCentralDomains::class,
-])->group(function () {
-    Route::get('/dashboard', function () {
-        Customer::firstOrCreate(
-            ['email' => 'test@davesautos.com'],
-            [
-                'name' => 'Dave Test Customer',
-                'phone' => '0771234567',
-            ]
-        );
-
-        return [
-            'tenant_id' => tenant('id'),
-            'customers_count' => Customer::count(),
-            'customers' => Customer::all(['id', 'tenant_id', 'name', 'email', 'phone']),
-        ];
-    });
-});
-
-//login route for branch portal
-Route::middleware([
-    'web',
-    InitializeTenancyByDomain::class,
-    PreventAccessFromCentralDomains::class,
-])->group(function () {
-
-    Route::get('/login', function () {
-        return view('auth.login', [
-            'title' => 'Branch Portal Login',
-            'subtitle' => 'Login to manage this branch customers, vehicles, jobs, and invoices.',
-            'formAction' => url('/login'),
-        ]);
-    })->name('branch.login');
-
+    ]))->name('branch.dashboard');
 });
