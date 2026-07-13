@@ -7,6 +7,7 @@ export default function Login({
     subtitle = 'Login to continue to FleeV.',
     formAction = '/login',
     homeUrl = '/',
+    credentials = null,
 }) {
     const { flash = {} } = usePage().props;
     const { data, setData, post, processing, errors } = useForm({
@@ -22,7 +23,7 @@ export default function Login({
 
     return (
         <PublicLayout>
-            <PageStyles title={`${title} - FleeV`} stylesheet="login.css" />
+            <PageStyles title={`${title} - FleeV`} />
 
             <main className="login-wrapper">
                 <div className="container">
@@ -39,6 +40,25 @@ export default function Login({
                                 {flash.error && <div className="alert alert-danger">{flash.error}</div>}
                                 {flash.success && (
                                     <div className="alert alert-success">{flash.success}</div>
+                                )}
+
+                                {credentials && (
+                                    <div className="demo-credentials">
+                                        <div>
+                                            <strong>Development super admin</strong>
+                                            <span>{credentials.email}</span>
+                                            <span>{credentials.password}</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setData('email', credentials.email);
+                                                setData('password', credentials.password);
+                                            }}
+                                        >
+                                            Use credentials
+                                        </button>
+                                    </div>
                                 )}
 
                                 <form onSubmit={submit}>

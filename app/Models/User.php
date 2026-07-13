@@ -10,6 +10,8 @@ use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 class User extends Authenticatable
 {
+    public const TYPE_SUPER_ADMIN = 'super_admin';
+
     /** @use HasFactory<UserFactory> */
     use BelongsToTenant, HasFactory, Notifiable;
 
@@ -36,5 +38,10 @@ class User extends Authenticatable
     public function getAuthPasswordName(): string
     {
         return 'pw';
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->type === self::TYPE_SUPER_ADMIN;
     }
 }

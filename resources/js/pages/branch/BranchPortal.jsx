@@ -12,7 +12,7 @@ export default function BranchPortal() {
 
     return (
         <PublicLayout>
-            <PageStyles title="Branch Portal - FleeV" stylesheet="branch-portal.css" />
+            <PageStyles title="Branch Portal - FleeV" />
 
             <main className="branch-wrapper">
                 <div className="container">
@@ -59,7 +59,7 @@ export default function BranchPortal() {
                                 </form>
 
                                 <div className="branch-footer text-center">
-                                    <Link href="/">Back to Home</Link>
+                                    <Link href="/" prefetch>Back to Home</Link>
                                 </div>
                             </div>
                         </div>

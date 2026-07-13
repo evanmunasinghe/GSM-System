@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\SuperAdminDashboardController;
+use App\Http\Controllers\Auth\AdminAuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -8,7 +10,7 @@ use Stancl\Tenancy\Database\Models\Domain;
 Route::get('/', fn () => Inertia::render('Welcome'))
     ->name('home');
 
-Route::get('/branch-portal', fn () => Inertia::render('BranchPortal'))
+Route::get('/branch-portal', fn () => Inertia::render('branch/BranchPortal'))
     ->name('branch.portal');
 
 Route::post('/branch-portal', function (Request $request) {
@@ -34,9 +36,16 @@ Route::post('/branch-portal', function (Request $request) {
     );
 })->name('branch.portal.redirect');
 
-Route::get('/admin/login', fn () => Inertia::render('Login', [
-    'title' => 'Administrative Login',
-    'subtitle' => 'Login to manage all branches, users, reports, and system settings.',
-    'formAction' => url('/admin/login'),
-    'homeUrl' => url('/'),
-]))->name('admin.login');
+Route::get('/admin/login', [AdminAuthController::class, 'create'])
+    ->name('admin.login');
+Route::post('/admin/login', [AdminAuthController::class, 'store'])
+    ->middleware('throttle:6,1')
+    ->name('admin.login.store');
+
+Route::prefix('admin')->middleware(['auth', 'super.admin'])->group(function () {
+    Route::get('/', fn () => redirect()->route('admin.dashboard'));
+    Route::get('/dashboard', SuperAdminDashboardController::class)
+        ->name('admin.dashboard');
+    Route::post('/logout', [AdminAuthController::class, 'destroy'])
+        ->name('admin.logout');
+});

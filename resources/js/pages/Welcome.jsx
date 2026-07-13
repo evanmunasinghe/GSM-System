@@ -12,7 +12,7 @@ const features = [
 export default function Welcome() {
     return (
         <PublicLayout>
-            <PageStyles title="FleeV" stylesheet="welcome.css" />
+            <PageStyles title="FleeV" />
 
             <main className="welcome-wrapper">
                 <div className="container">
@@ -33,10 +33,10 @@ export default function Welcome() {
                             </p>
 
                             <div className="button-group mt-5">
-                                <Link href="/admin/login" className="btn btn-admin">
+                                <Link href="/admin/login" className="btn btn-admin" prefetch>
                                     Administrative Login
                                 </Link>
-                                <Link href="/branch-portal" className="btn btn-branch">
+                                <Link href="/branch-portal" className="btn btn-branch" prefetch>
                                     Branch Portal
                                 </Link>
                             </div>

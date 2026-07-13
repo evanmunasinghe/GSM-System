@@ -7,3 +7,75 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+:root {
+    color-scheme: dark;
+    background: #07111d;
+}
+
+:root[data-theme='light'] {
+    color-scheme: light;
+    background: #f4f7fb;
+}
+
+html,
+body,
+#app {
+    min-height: 100%;
+}
+
+body {
+    margin: 0;
+}
+
+#app {
+    min-height: 100vh;
+    transition: opacity 160ms ease, transform 160ms ease;
+}
+
+html.is-navigating #app {
+    opacity: 0.78;
+    transform: translateY(-2px);
+    pointer-events: none;
+}
+
+@keyframes fleev-page-out {
+    to {
+        opacity: 0;
+        transform: scale(0.996);
+    }
+}
+
+@keyframes fleev-page-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px) scale(0.998);
+    }
+}
+
+::view-transition-old(root) {
+    animation: 120ms ease-out both fleev-page-out;
+}
+
+::view-transition-new(root) {
+    animation: 220ms cubic-bezier(0.16, 1, 0.3, 1) both fleev-page-in;
+}
+
+#nprogress .bar {
+    height: 3px !important;
+}
+
+#nprogress .peg {
+    box-shadow: 0 0 12px #f97316, 0 0 5px #f97316 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #app {
+        transition: none;
+    }
+
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+        animation: none;
+    }
+}
