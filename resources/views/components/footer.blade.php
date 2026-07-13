@@ -2,7 +2,7 @@
     <div class="container">
         <div class="footer-content">
             <span>
-                © {{ date('Y') }} Garage Management System
+                © {{ date('Y') }} FleeV Garage Management System
             </span>
 
             <span>

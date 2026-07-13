@@ -20,8 +20,17 @@ class CreateTenantsTable extends Migration
 
             // your custom columns may go here
 
+            $table->string('id')->primary(); // Used as the unique slug (e.g., 'gamage-auto')
+            $table->string('com_name');
+            $table->string('address')->nullable();
+            $table->string('tel')->nullable();
+            $table->string('email')->nullable();
+            $table->string('logo')->nullable();
+            $table->string('tag')->nullable();
+            $table->string('admin')->nullable();
+            $table->string('contact')->nullable();
+            $table->string('ant')->nullable();
             $table->timestamps();
-            $table->json('data')->nullable();
         });
     }
 

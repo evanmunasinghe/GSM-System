@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'Login' }} - GMS</title>
+    <title>{{ $title ?? 'Login' }} - FleeV</title>
     <x-theme-head />
 
     {{-- Bootstrap 5 --}}
@@ -30,12 +30,12 @@
                                 🔧
                             </div>
 
-                            <h1>GMS</h1>
+                            <h1>FleeV</h1>
 
                             <h2>{{ $title ?? 'Login' }}</h2>
 
                             <p>
-                                {{ $subtitle ?? 'Login to continue to Garage Management System.' }}
+                                {{ $subtitle ?? 'Login to continue to FleeV.' }}
                             </p>
                         </div>
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Garage Management System</title>
+    <title>FleeV</title>
     <x-theme-head />
 
     {{-- Bootstrap 5 --}}
@@ -23,11 +23,11 @@
                 {{-- Left Content --}}
                 <div class="col-lg-6 text-center text-lg-start">
                     <div class="brand-badge mb-4">
-                        Garage Management System V1.0.1
+                        FleeV Garage Management System V1.0.1
                     </div>
 
                     <h1 class="main-title">
-                        Manage Your Garage Smarter with <span>GMS</span>
+                        Manage Your Garage Smarter with <span>FleeV</span>
                     </h1>
 
                     <p class="main-description">
