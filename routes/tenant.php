@@ -6,7 +6,14 @@ use Illuminate\Support\Facades\Route;
 use App\Models\Customer;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
+use App\Models\Vehicle;
+use Inertia\Inertia;
 
+Route::get('/dashboard', function () {
+    return Inertia::render('Dashboard', [
+        'vehicles' => Vehicle::latest()->get(),
+    ]);
+});
 /*
 |--------------------------------------------------------------------------
 | Tenant Routes
