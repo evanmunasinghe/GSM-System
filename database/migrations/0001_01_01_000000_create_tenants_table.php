@@ -16,10 +16,6 @@ class CreateTenantsTable extends Migration
     public function up(): void
     {
         Schema::create('tenants', function (Blueprint $table) {
-            $table->string('id')->primary();
-
-            // your custom columns may go here
-
             $table->string('id')->primary(); // Used as the unique slug (e.g., 'gamage-auto')
             $table->string('com_name');
             $table->string('address')->nullable();

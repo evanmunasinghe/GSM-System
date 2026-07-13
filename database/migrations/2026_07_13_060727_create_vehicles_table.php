@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('plate')->unique();
             $table->string('engine_no')->nullable();
             $table->string('chassis_no')->nullable();
-            $table->integer('owner_id')->nullable(); // Foreign ID reference to target active owner
+            $table->unsignedBigInteger('owner_id')->nullable(); // Foreign ID reference to target active owner
             $table->string('ant')->nullable();
             $table->string('vehicletype')->nullable();
             $table->string('make');
