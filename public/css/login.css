@@ -156,6 +156,59 @@ body {
     font-size: 14px;
 }
 
+[data-theme="light"] body {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+[data-theme="light"] .login-wrapper {
+    background:
+        radial-gradient(circle at top left, rgba(249, 115, 22, 0.16), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(59, 130, 246, 0.16), transparent 32%),
+        linear-gradient(135deg, #f8fafc 0%, #fff7ed 50%, #eff6ff 100%);
+}
+
+[data-theme="light"] .login-card {
+    background: rgba(255, 255, 255, 0.78);
+    border-color: rgba(15, 23, 42, 0.12);
+    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.14);
+}
+
+[data-theme="light"] .login-header h1,
+[data-theme="light"] .login-header h2,
+[data-theme="light"] .form-label {
+    color: #0f172a;
+}
+
+[data-theme="light"] .login-header p,
+[data-theme="light"] .form-check-label,
+[data-theme="light"] .login-footer a {
+    color: #475569;
+}
+
+[data-theme="light"] .form-control {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+[data-theme="light"] .form-control::placeholder {
+    color: #64748b;
+}
+
+[data-theme="light"] .form-control:focus {
+    background: #ffffff;
+    color: #0f172a;
+}
+
+[data-theme="light"] .form-check-input {
+    border-color: #94a3b8;
+}
+
+[data-theme="light"] .login-footer a:hover {
+    color: #0f172a;
+}
+
 @media (max-width: 575px) {
     .login-card {
         padding: 30px 24px;

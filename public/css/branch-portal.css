@@ -132,6 +132,54 @@ body {
     margin-top: 8px;
 }
 
+[data-theme="light"] body {
+    background: #f8fafc;
+    color: #0f172a;
+}
+
+[data-theme="light"] .branch-wrapper {
+    background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.16), transparent 32%),
+        radial-gradient(circle at bottom right, rgba(249, 115, 22, 0.16), transparent 32%),
+        linear-gradient(135deg, #f8fafc 0%, #eff6ff 50%, #fff7ed 100%);
+}
+
+[data-theme="light"] .branch-card {
+    background: rgba(255, 255, 255, 0.78);
+    border-color: rgba(15, 23, 42, 0.12);
+    box-shadow: 0 30px 80px rgba(15, 23, 42, 0.14);
+}
+
+[data-theme="light"] .branch-header h1,
+[data-theme="light"] .form-label {
+    color: #0f172a;
+}
+
+[data-theme="light"] .branch-header p,
+[data-theme="light"] .help-text,
+[data-theme="light"] .branch-footer a {
+    color: #475569;
+}
+
+[data-theme="light"] .form-control {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: #cbd5e1;
+    color: #0f172a;
+}
+
+[data-theme="light"] .form-control::placeholder {
+    color: #64748b;
+}
+
+[data-theme="light"] .form-control:focus {
+    background: #ffffff;
+    color: #0f172a;
+}
+
+[data-theme="light"] .branch-footer a:hover {
+    color: #0f172a;
+}
+
 @media (max-width: 575px) {
     .branch-card {
         padding: 30px 24px;
