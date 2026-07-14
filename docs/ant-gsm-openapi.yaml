@@ -1,0 +1,1135 @@
+openapi: 3.1.0
+info:
+  title: ANT ERP - GSM Integration API
+  version: 1.0.0
+  summary: Contract for exchanging master data and sales transactions between ANT ERP and GSM.
+  description: |
+    Proposed integration contract. These operations are not implemented by the current
+    GSM application yet.
+
+    ANT ERP is the system of record for customers, vendors, employees, inquiries,
+    quotations, orders, invoices, and dispatches. ANT pushes those records to GSM by
+    using idempotent PUT operations or the batch synchronization operation. GSM stores
+    ANT identifiers as external identifiers and sends GSM-originated workshop events
+    to ANT through the webhooks defined in this document.
+
+    Integration rules:
+      * Every request is tenant-scoped. The token tenant and path tenant must match.
+      * ANT IDs are opaque strings and must not be converted to GSM database IDs.
+      * PUT is an upsert and is safe to retry with the same Idempotency-Key.
+      * source_updated_at is used for conflict detection; the newest accepted source
+        version wins. Older versions receive HTTP 409.
+      * Monetary amounts are decimal strings to avoid floating-point rounding errors.
+      * Dates and timestamps use ISO 8601. Timestamps should be sent in UTC.
+      * Deletions are soft deletions represented by active=false or deleted_at.
+  contact:
+    name: ANT / GSM Integration Team
+  license:
+    name: Proprietary
+servers:
+  - url: https://{tenant}.gsm.example.com/api
+    description: GSM production tenant API (replace with the deployed GSM domain)
+    variables:
+      tenant:
+        default: demo
+  - url: http://{tenant}.localhost/api
+    description: Local GSM tenant API
+    variables:
+      tenant:
+        default: demo
+security:
+  - oauth2ClientCredentials:
+      - integration:read
+      - integration:write
+tags:
+  - name: Integration
+  - name: Customers
+  - name: Vendors
+  - name: Employees
+  - name: Vehicles
+  - name: Inquiries
+  - name: Quotations
+  - name: Orders
+  - name: Invoices
+  - name: Dispatches
+
+paths:
+  /integration/v1/health:
+    get:
+      tags: [Integration]
+      summary: Check GSM integration availability
+      operationId: getIntegrationHealth
+      security:
+        - oauth2ClientCredentials: [integration:read]
+      responses:
+        '200':
+          description: Integration service is available.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /integration/v1/tenants/{tenantId}/sync:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+    post:
+      tags: [Integration]
+      summary: Synchronize multiple ANT records in one request
+      description: |
+        Accepts up to 100 records. Records are processed independently. A successful
+        HTTP response can contain rejected individual records, so the caller must inspect
+        every item in results.
+      operationId: synchronizeAntRecords
+      security:
+        - oauth2ClientCredentials: [integration:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BatchSyncRequest'
+      responses:
+        '200':
+          description: Batch processed; inspect each result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchSyncResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /integration/v1/tenants/{tenantId}/customers/{antCustomerId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/AntCustomerId'
+    get:
+      tags: [Customers]
+      summary: Get an ANT-managed customer from GSM
+      operationId: getCustomer
+      security:
+        - oauth2ClientCredentials: [integration:read]
+      responses:
+        '200':
+          $ref: '#/components/responses/CustomerResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Customers]
+      summary: Create or replace an ANT-managed customer in GSM
+      operationId: upsertCustomer
+      security:
+        - oauth2ClientCredentials: [integration:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomerWrite'
+      responses:
+        '200':
+          $ref: '#/components/responses/CustomerResponse'
+        '201':
+          $ref: '#/components/responses/CustomerCreatedResponse'
+        '409':
+          $ref: '#/components/responses/VersionConflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /integration/v1/tenants/{tenantId}/vendors/{antVendorId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/AntVendorId'
+    get:
+      tags: [Vendors]
+      summary: Get an ANT-managed vendor from GSM
+      operationId: getVendor
+      security:
+        - oauth2ClientCredentials: [integration:read]
+      responses:
+        '200':
+          $ref: '#/components/responses/VendorResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Vendors]
+      summary: Create or replace an ANT-managed vendor in GSM
+      operationId: upsertVendor
+      security:
+        - oauth2ClientCredentials: [integration:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VendorWrite'
+      responses:
+        '200':
+          $ref: '#/components/responses/VendorResponse'
+        '201':
+          $ref: '#/components/responses/VendorCreatedResponse'
+        '409':
+          $ref: '#/components/responses/VersionConflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /integration/v1/tenants/{tenantId}/employees/{antEmployeeId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/AntEmployeeId'
+    get:
+      tags: [Employees]
+      summary: Get an ANT-managed employee from GSM
+      operationId: getEmployee
+      security:
+        - oauth2ClientCredentials: [integration:read]
+      responses:
+        '200':
+          $ref: '#/components/responses/EmployeeResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Employees]
+      summary: Create or replace an ANT-managed employee in GSM
+      operationId: upsertEmployee
+      security:
+        - oauth2ClientCredentials: [integration:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmployeeWrite'
+      responses:
+        '200':
+          $ref: '#/components/responses/EmployeeResponse'
+        '201':
+          $ref: '#/components/responses/EmployeeCreatedResponse'
+        '409':
+          $ref: '#/components/responses/VersionConflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /integration/v1/tenants/{tenantId}/vehicles/{antVehicleId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/AntVehicleId'
+    get:
+      tags: [Vehicles]
+      summary: Get a vehicle linked to ANT
+      operationId: getVehicle
+      security:
+        - oauth2ClientCredentials: [integration:read]
+      responses:
+        '200':
+          $ref: '#/components/responses/VehicleResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Vehicles]
+      summary: Create or replace an ANT-linked vehicle in GSM
+      operationId: upsertVehicle
+      security:
+        - oauth2ClientCredentials: [integration:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehicleWrite'
+      responses:
+        '200':
+          $ref: '#/components/responses/VehicleResponse'
+        '201':
+          $ref: '#/components/responses/VehicleCreatedResponse'
+        '409':
+          $ref: '#/components/responses/VersionConflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /integration/v1/tenants/{tenantId}/inquiries/{antInquiryId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/AntInquiryId'
+    get:
+      tags: [Inquiries]
+      summary: Get an inquiry mirrored from ANT
+      operationId: getInquiry
+      security:
+        - oauth2ClientCredentials: [integration:read]
+      responses:
+        '200':
+          description: Inquiry found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inquiry'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Inquiries]
+      summary: Create or replace an inquiry mirror in GSM
+      operationId: upsertInquiry
+      security:
+        - oauth2ClientCredentials: [integration:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InquiryWrite'
+      responses:
+        '200':
+          description: Inquiry updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inquiry'
+        '201':
+          description: Inquiry created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inquiry'
+        '409':
+          $ref: '#/components/responses/VersionConflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /integration/v1/tenants/{tenantId}/quotations/{antQuotationId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/AntQuotationId'
+    get:
+      tags: [Quotations]
+      summary: Get a quotation mirrored from ANT
+      operationId: getQuotation
+      security:
+        - oauth2ClientCredentials: [integration:read]
+      responses:
+        '200':
+          description: Quotation found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quotation'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Quotations]
+      summary: Create or replace a quotation mirror in GSM
+      operationId: upsertQuotation
+      security:
+        - oauth2ClientCredentials: [integration:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/QuotationWrite'
+      responses:
+        '200':
+          description: Quotation updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quotation'
+        '201':
+          description: Quotation created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Quotation'
+        '409':
+          $ref: '#/components/responses/VersionConflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /integration/v1/tenants/{tenantId}/orders/{antOrderId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/AntOrderId'
+    get:
+      tags: [Orders]
+      summary: Get an order mirrored from ANT
+      operationId: getOrder
+      security:
+        - oauth2ClientCredentials: [integration:read]
+      responses:
+        '200':
+          description: Order found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Orders]
+      summary: Create or replace an order mirror in GSM
+      operationId: upsertOrder
+      security:
+        - oauth2ClientCredentials: [integration:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderWrite'
+      responses:
+        '200':
+          description: Order updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '201':
+          description: Order created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '409':
+          $ref: '#/components/responses/VersionConflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /integration/v1/tenants/{tenantId}/invoices/{antInvoiceId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/AntInvoiceId'
+    get:
+      tags: [Invoices]
+      summary: Get an invoice mirrored from ANT
+      operationId: getInvoice
+      security:
+        - oauth2ClientCredentials: [integration:read]
+      responses:
+        '200':
+          description: Invoice found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Invoices]
+      summary: Create or replace an invoice mirror in GSM
+      operationId: upsertInvoice
+      security:
+        - oauth2ClientCredentials: [integration:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InvoiceWrite'
+      responses:
+        '200':
+          description: Invoice updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '201':
+          description: Invoice created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Invoice'
+        '409':
+          $ref: '#/components/responses/VersionConflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /integration/v1/tenants/{tenantId}/dispatches/{antDispatchId}:
+    parameters:
+      - $ref: '#/components/parameters/TenantId'
+      - $ref: '#/components/parameters/AntDispatchId'
+    get:
+      tags: [Dispatches]
+      summary: Get a dispatch mirrored from ANT
+      operationId: getDispatch
+      security:
+        - oauth2ClientCredentials: [integration:read]
+      responses:
+        '200':
+          description: Dispatch found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispatch'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Dispatches]
+      summary: Create or replace a dispatch mirror in GSM
+      operationId: upsertDispatch
+      security:
+        - oauth2ClientCredentials: [integration:write]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DispatchWrite'
+      responses:
+        '200':
+          description: Dispatch updated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispatch'
+        '201':
+          description: Dispatch created.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dispatch'
+        '409':
+          $ref: '#/components/responses/VersionConflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+webhooks:
+  workshopJobChanged:
+    post:
+      tags: [Integration]
+      summary: Notify ANT that a GSM workshop job changed
+      description: |
+        GSM sends this request to the ANT webhook URL configured for the tenant.
+        ANT should deduplicate on event_id and return any 2xx response only after the
+        event has been durably accepted. GSM may retry with exponential backoff.
+      operationId: receiveWorkshopJobChanged
+      security:
+        - webhookSignature: []
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+        - $ref: '#/components/parameters/WebhookTimestamp'
+        - $ref: '#/components/parameters/WebhookSignature'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkshopJobEvent'
+      responses:
+        '202':
+          description: Event accepted.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Event already processed; no further retry is needed.
+  vehicleChanged:
+    post:
+      tags: [Integration]
+      summary: Notify ANT that GSM vehicle information changed
+      operationId: receiveVehicleChanged
+      security:
+        - webhookSignature: []
+      parameters:
+        - $ref: '#/components/parameters/WebhookId'
+        - $ref: '#/components/parameters/WebhookTimestamp'
+        - $ref: '#/components/parameters/WebhookSignature'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VehicleEvent'
+      responses:
+        '202':
+          description: Event accepted.
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    oauth2ClientCredentials:
+      type: oauth2
+      description: Separate client credentials should be issued per tenant and environment.
+      flows:
+        clientCredentials:
+          tokenUrl: /api/oauth/token
+          scopes:
+            integration:read: Read ANT records mirrored in GSM.
+            integration:write: Create or update ANT records mirrored in GSM.
+    webhookSignature:
+      type: apiKey
+      in: header
+      name: X-GSM-Signature-256
+      description: HMAC-SHA256 of `{timestamp}.{raw_request_body}` using the tenant webhook secret.
+
+  parameters:
+    TenantId:
+      name: tenantId
+      in: path
+      required: true
+      description: GSM tenant slug; must equal the tenant authorized by the access token.
+      schema:
+        type: string
+        pattern: '^[a-z0-9][a-z0-9-]{1,62}$'
+      example: gamage-auto
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Unique UUID retained by GSM for at least 24 hours.
+      schema:
+        type: string
+        format: uuid
+    AntCustomerId:
+      name: antCustomerId
+      in: path
+      required: true
+      schema: { type: string, maxLength: 100 }
+      example: CUS-000123
+    AntVendorId:
+      name: antVendorId
+      in: path
+      required: true
+      schema: { type: string, maxLength: 100 }
+      example: VEN-000045
+    AntEmployeeId:
+      name: antEmployeeId
+      in: path
+      required: true
+      schema: { type: string, maxLength: 100 }
+      example: EMP-000007
+    AntVehicleId:
+      name: antVehicleId
+      in: path
+      required: true
+      schema: { type: string, maxLength: 100 }
+      example: VEH-000702
+    AntInquiryId:
+      name: antInquiryId
+      in: path
+      required: true
+      schema: { type: string, maxLength: 100 }
+      example: INQ-2026-0012
+    AntQuotationId:
+      name: antQuotationId
+      in: path
+      required: true
+      schema: { type: string, maxLength: 100 }
+      example: QUO-2026-0012
+    AntOrderId:
+      name: antOrderId
+      in: path
+      required: true
+      schema: { type: string, maxLength: 100 }
+      example: SO-2026-0012
+    AntInvoiceId:
+      name: antInvoiceId
+      in: path
+      required: true
+      schema: { type: string, maxLength: 100 }
+      example: INV-2026-0012
+    AntDispatchId:
+      name: antDispatchId
+      in: path
+      required: true
+      schema: { type: string, maxLength: 100 }
+      example: DSP-2026-0012
+    WebhookId:
+      name: X-GSM-Webhook-Id
+      in: header
+      required: true
+      schema: { type: string, format: uuid }
+    WebhookTimestamp:
+      name: X-GSM-Timestamp
+      in: header
+      required: true
+      schema: { type: integer, format: int64 }
+      description: Unix timestamp used to prevent replay attacks.
+    WebhookSignature:
+      name: X-GSM-Signature-256
+      in: header
+      required: true
+      schema:
+        type: string
+        pattern: '^sha256=[a-f0-9]{64}$'
+
+  responses:
+    CustomerResponse:
+      description: Customer found or updated.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Customer' }
+    CustomerCreatedResponse:
+      description: Customer created.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Customer' }
+    VendorResponse:
+      description: Vendor found or updated.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Vendor' }
+    VendorCreatedResponse:
+      description: Vendor created.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Vendor' }
+    EmployeeResponse:
+      description: Employee found or updated.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Employee' }
+    EmployeeCreatedResponse:
+      description: Employee created.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Employee' }
+    VehicleResponse:
+      description: Vehicle found or updated.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Vehicle' }
+    VehicleCreatedResponse:
+      description: Vehicle created.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Vehicle' }
+    BadRequest:
+      description: Malformed request.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unauthorized:
+      description: Missing, invalid, or expired credentials.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Forbidden:
+      description: The credentials are not authorized for this tenant or scope.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: The requested record does not exist for this tenant.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    VersionConflict:
+      description: GSM already has a newer source version or the idempotency key was reused with different content.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ValidationError:
+      description: Request validation failed.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ValidationProblem' }
+
+  schemas:
+    HealthResponse:
+      type: object
+      required: [status, service, version, timestamp]
+      properties:
+        status: { type: string, const: ok }
+        service: { type: string, const: ant-gsm-integration }
+        version: { type: string, example: 1.0.0 }
+        timestamp: { type: string, format: date-time }
+
+    SyncMetadata:
+      type: object
+      required: [source_updated_at]
+      properties:
+        source_updated_at:
+          type: string
+          format: date-time
+          description: Time this version was committed in ANT.
+        active:
+          type: boolean
+          default: true
+        deleted_at:
+          type: [string, 'null']
+          format: date-time
+        source_version:
+          type: [string, 'null']
+          maxLength: 100
+          description: Optional ANT row version, revision, or ETag.
+
+    Address:
+      type: object
+      properties:
+        line1: { type: [string, 'null'], maxLength: 200 }
+        line2: { type: [string, 'null'], maxLength: 200 }
+        city: { type: [string, 'null'], maxLength: 100 }
+        district: { type: [string, 'null'], maxLength: 100 }
+        postal_code: { type: [string, 'null'], maxLength: 20 }
+        country_code: { type: string, pattern: '^[A-Z]{2}$', default: LK }
+
+    CustomerWrite:
+      allOf:
+        - $ref: '#/components/schemas/SyncMetadata'
+        - type: object
+          required: [name]
+          properties:
+            customer_code: { type: [string, 'null'], maxLength: 50, example: C000123 }
+            name: { type: string, maxLength: 200, example: Nimal Perera }
+            customer_type: { type: string, enum: [individual, company], default: individual }
+            email: { type: [string, 'null'], format: email, maxLength: 254 }
+            phone: { type: [string, 'null'], maxLength: 30, example: '+94771234567' }
+            tax_number: { type: [string, 'null'], maxLength: 50 }
+            identification_number: { type: [string, 'null'], maxLength: 50 }
+            address: { $ref: '#/components/schemas/Address' }
+            credit_limit: { $ref: '#/components/schemas/NullableMoney' }
+            payment_terms_days: { type: [integer, 'null'], minimum: 0 }
+    Customer:
+      allOf:
+        - $ref: '#/components/schemas/CustomerWrite'
+        - $ref: '#/components/schemas/StoredResource'
+
+    VendorWrite:
+      allOf:
+        - $ref: '#/components/schemas/SyncMetadata'
+        - type: object
+          required: [name]
+          properties:
+            vendor_code: { type: [string, 'null'], maxLength: 50 }
+            name: { type: string, maxLength: 200, example: Lanka Auto Parts (Pvt) Ltd }
+            contact_name: { type: [string, 'null'], maxLength: 200 }
+            email: { type: [string, 'null'], format: email, maxLength: 254 }
+            phone: { type: [string, 'null'], maxLength: 30 }
+            tax_number: { type: [string, 'null'], maxLength: 50 }
+            address: { $ref: '#/components/schemas/Address' }
+            payment_terms_days: { type: [integer, 'null'], minimum: 0 }
+    Vendor:
+      allOf:
+        - $ref: '#/components/schemas/VendorWrite'
+        - $ref: '#/components/schemas/StoredResource'
+
+    EmployeeWrite:
+      allOf:
+        - $ref: '#/components/schemas/SyncMetadata'
+        - type: object
+          required: [employee_code, name, role]
+          properties:
+            employee_code: { type: string, maxLength: 50, example: E0007 }
+            name: { type: string, maxLength: 200 }
+            email: { type: [string, 'null'], format: email, maxLength: 254 }
+            phone: { type: [string, 'null'], maxLength: 30 }
+            role: { type: string, maxLength: 100, example: service_advisor }
+            branch_code: { type: [string, 'null'], maxLength: 50 }
+            hire_date: { type: [string, 'null'], format: date }
+            termination_date: { type: [string, 'null'], format: date }
+    Employee:
+      allOf:
+        - $ref: '#/components/schemas/EmployeeWrite'
+        - $ref: '#/components/schemas/StoredResource'
+
+    VehicleWrite:
+      allOf:
+        - $ref: '#/components/schemas/SyncMetadata'
+        - type: object
+          required: [plate, make, model]
+          properties:
+            ant_customer_id: { type: [string, 'null'], maxLength: 100 }
+            plate: { type: string, maxLength: 30, example: WP-CAB-1234 }
+            engine_number: { type: [string, 'null'], maxLength: 100 }
+            chassis_number: { type: [string, 'null'], maxLength: 100 }
+            vehicle_type: { type: [string, 'null'], maxLength: 50 }
+            make: { type: string, maxLength: 100, example: Toyota }
+            model: { type: string, maxLength: 100, example: Corolla }
+            manufacture_year: { type: [integer, 'null'], minimum: 1886, maximum: 2200 }
+            registration_year: { type: [integer, 'null'], minimum: 1886, maximum: 2200 }
+            colour: { type: [string, 'null'], maxLength: 50 }
+            country_code: { type: string, pattern: '^[A-Z]{2}$', default: LK }
+            odometer_km: { type: [integer, 'null'], minimum: 0 }
+    Vehicle:
+      allOf:
+        - $ref: '#/components/schemas/VehicleWrite'
+        - $ref: '#/components/schemas/StoredResource'
+
+    StoredResource:
+      type: object
+      required: [ant_id, gsm_id, tenant_id, synced_at]
+      properties:
+        ant_id: { type: string, maxLength: 100, readOnly: true }
+        gsm_id: { type: integer, format: int64, readOnly: true }
+        tenant_id: { type: string, readOnly: true }
+        synced_at: { type: string, format: date-time, readOnly: true }
+
+    DocumentLine:
+      type: object
+      required: [line_id, description, quantity, unit_price, line_total]
+      properties:
+        line_id: { type: string, maxLength: 100 }
+        item_code: { type: [string, 'null'], maxLength: 100 }
+        description: { type: string, maxLength: 500 }
+        line_type: { type: string, enum: [part, service, labour, fee, other] }
+        quantity: { type: string, pattern: '^-?\d+(\.\d{1,4})?$', example: '2.0000' }
+        unit: { type: [string, 'null'], maxLength: 20, example: unit }
+        unit_price: { $ref: '#/components/schemas/Money' }
+        discount_amount: { $ref: '#/components/schemas/Money' }
+        tax_amount: { $ref: '#/components/schemas/Money' }
+        line_total: { $ref: '#/components/schemas/Money' }
+        ant_vendor_id: { type: [string, 'null'], maxLength: 100 }
+        notes: { type: [string, 'null'], maxLength: 1000 }
+
+    Money:
+      type: string
+      pattern: '^-?\d{1,15}(\.\d{1,2})?$'
+      example: '12500.00'
+      default: '0.00'
+    NullableMoney:
+      type: [string, 'null']
+      pattern: '^-?\d{1,15}(\.\d{1,2})?$'
+      example: '100000.00'
+
+    DocumentTotals:
+      type: object
+      required: [subtotal, discount_total, tax_total, grand_total]
+      properties:
+        subtotal: { $ref: '#/components/schemas/Money' }
+        discount_total: { $ref: '#/components/schemas/Money' }
+        tax_total: { $ref: '#/components/schemas/Money' }
+        grand_total: { $ref: '#/components/schemas/Money' }
+        paid_total: { $ref: '#/components/schemas/Money' }
+        balance_due: { $ref: '#/components/schemas/Money' }
+
+    DocumentReferences:
+      type: object
+      properties:
+        inquiry_id: { type: [string, 'null'], maxLength: 100 }
+        quotation_id: { type: [string, 'null'], maxLength: 100 }
+        order_id: { type: [string, 'null'], maxLength: 100 }
+        invoice_id: { type: [string, 'null'], maxLength: 100 }
+        dispatch_id: { type: [string, 'null'], maxLength: 100 }
+        workshop_job_id: { type: [string, 'null'], maxLength: 100 }
+
+    BusinessDocumentBase:
+      allOf:
+        - $ref: '#/components/schemas/SyncMetadata'
+        - type: object
+          required: [document_number, document_date, currency, status, lines]
+          properties:
+            document_number: { type: string, maxLength: 100 }
+            document_date: { type: string, format: date }
+            ant_customer_id: { type: [string, 'null'], maxLength: 100 }
+            ant_vendor_id: { type: [string, 'null'], maxLength: 100 }
+            ant_employee_id: { type: [string, 'null'], maxLength: 100 }
+            ant_vehicle_id: { type: [string, 'null'], maxLength: 100 }
+            branch_code: { type: [string, 'null'], maxLength: 50 }
+            currency: { type: string, pattern: '^[A-Z]{3}$', default: LKR }
+            status: { type: string, maxLength: 50 }
+            subject: { type: [string, 'null'], maxLength: 250 }
+            notes: { type: [string, 'null'], maxLength: 2000 }
+            references: { $ref: '#/components/schemas/DocumentReferences' }
+            lines:
+              type: array
+              minItems: 1
+              maxItems: 1000
+              items: { $ref: '#/components/schemas/DocumentLine' }
+            totals: { $ref: '#/components/schemas/DocumentTotals' }
+
+    InquiryWrite:
+      allOf:
+        - $ref: '#/components/schemas/BusinessDocumentBase'
+        - type: object
+          properties:
+            requested_by_date: { type: [string, 'null'], format: date }
+    Inquiry:
+      allOf:
+        - $ref: '#/components/schemas/InquiryWrite'
+        - $ref: '#/components/schemas/StoredResource'
+
+    QuotationWrite:
+      allOf:
+        - $ref: '#/components/schemas/BusinessDocumentBase'
+        - type: object
+          required: [valid_until]
+          properties:
+            valid_until: { type: string, format: date }
+    Quotation:
+      allOf:
+        - $ref: '#/components/schemas/QuotationWrite'
+        - $ref: '#/components/schemas/StoredResource'
+
+    OrderWrite:
+      allOf:
+        - $ref: '#/components/schemas/BusinessDocumentBase'
+        - type: object
+          properties:
+            expected_completion_date: { type: [string, 'null'], format: date }
+            customer_purchase_order: { type: [string, 'null'], maxLength: 100 }
+    Order:
+      allOf:
+        - $ref: '#/components/schemas/OrderWrite'
+        - $ref: '#/components/schemas/StoredResource'
+
+    InvoiceWrite:
+      allOf:
+        - $ref: '#/components/schemas/BusinessDocumentBase'
+        - type: object
+          required: [due_date]
+          properties:
+            due_date: { type: string, format: date }
+            payment_status: { type: string, enum: [unpaid, partially_paid, paid, overdue, void] }
+    Invoice:
+      allOf:
+        - $ref: '#/components/schemas/InvoiceWrite'
+        - $ref: '#/components/schemas/StoredResource'
+
+    DispatchWrite:
+      allOf:
+        - $ref: '#/components/schemas/BusinessDocumentBase'
+        - type: object
+          properties:
+            dispatched_at: { type: [string, 'null'], format: date-time }
+            delivered_at: { type: [string, 'null'], format: date-time }
+            carrier: { type: [string, 'null'], maxLength: 100 }
+            tracking_number: { type: [string, 'null'], maxLength: 100 }
+            delivery_address: { $ref: '#/components/schemas/Address' }
+            received_by: { type: [string, 'null'], maxLength: 200 }
+    Dispatch:
+      allOf:
+        - $ref: '#/components/schemas/DispatchWrite'
+        - $ref: '#/components/schemas/StoredResource'
+
+    BatchSyncRequest:
+      type: object
+      required: [batch_id, records]
+      properties:
+        batch_id: { type: string, format: uuid }
+        records:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            $ref: '#/components/schemas/SyncRecord'
+
+    SyncRecord:
+      type: object
+      required: [record_id, resource_type, ant_id, data]
+      properties:
+        record_id: { type: string, format: uuid }
+        resource_type:
+          type: string
+          enum: [customer, vendor, employee, vehicle, inquiry, quotation, order, invoice, dispatch]
+        ant_id: { type: string, maxLength: 100 }
+        data:
+          oneOf:
+            - $ref: '#/components/schemas/CustomerWrite'
+            - $ref: '#/components/schemas/VendorWrite'
+            - $ref: '#/components/schemas/EmployeeWrite'
+            - $ref: '#/components/schemas/VehicleWrite'
+            - $ref: '#/components/schemas/InquiryWrite'
+            - $ref: '#/components/schemas/QuotationWrite'
+            - $ref: '#/components/schemas/OrderWrite'
+            - $ref: '#/components/schemas/InvoiceWrite'
+            - $ref: '#/components/schemas/DispatchWrite'
+
+    BatchSyncResponse:
+      type: object
+      required: [batch_id, accepted, rejected, results]
+      properties:
+        batch_id: { type: string, format: uuid }
+        accepted: { type: integer, minimum: 0 }
+        rejected: { type: integer, minimum: 0 }
+        results:
+          type: array
+          items:
+            type: object
+            required: [record_id, ant_id, resource_type, status]
+            properties:
+              record_id: { type: string, format: uuid }
+              ant_id: { type: string }
+              resource_type: { type: string }
+              status: { type: string, enum: [created, updated, unchanged, rejected] }
+              gsm_id: { type: [integer, 'null'], format: int64 }
+              error: { oneOf: [{ $ref: '#/components/schemas/Problem' }, { type: 'null' }] }
+
+    WorkshopJobEvent:
+      type: object
+      required: [event_id, event_type, occurred_at, tenant_id, data]
+      properties:
+        event_id: { type: string, format: uuid }
+        event_type: { type: string, const: workshop_job.changed }
+        occurred_at: { type: string, format: date-time }
+        tenant_id: { type: string }
+        data:
+          type: object
+          required: [gsm_workshop_job_id, status]
+          properties:
+            gsm_workshop_job_id: { type: string, maxLength: 100 }
+            ant_order_id: { type: [string, 'null'], maxLength: 100 }
+            ant_vehicle_id: { type: [string, 'null'], maxLength: 100 }
+            ant_customer_id: { type: [string, 'null'], maxLength: 100 }
+            status:
+              type: string
+              enum: [received, inspection, awaiting_approval, approved, in_progress, on_hold, completed, delivered, cancelled]
+            odometer_km: { type: [integer, 'null'], minimum: 0 }
+            assigned_employee_ids:
+              type: array
+              items: { type: string, maxLength: 100 }
+            notes: { type: [string, 'null'], maxLength: 2000 }
+
+    VehicleEvent:
+      type: object
+      required: [event_id, event_type, occurred_at, tenant_id, data]
+      properties:
+        event_id: { type: string, format: uuid }
+        event_type: { type: string, const: vehicle.changed }
+        occurred_at: { type: string, format: date-time }
+        tenant_id: { type: string }
+        data: { $ref: '#/components/schemas/Vehicle' }
+
+    Problem:
+      type: object
+      required: [type, title, status, detail, trace_id]
+      properties:
+        type: { type: string, format: uri-reference, example: 'https://gsm.example.com/problems/not-found' }
+        title: { type: string, example: Resource not found }
+        status: { type: integer, minimum: 400, maximum: 599, example: 404 }
+        detail: { type: string }
+        instance: { type: [string, 'null'], format: uri-reference }
+        trace_id: { type: string, example: 01J2P2ZK4D5XQ9A3F7Y8B1C6NE }
+        code: { type: [string, 'null'], example: RESOURCE_NOT_FOUND }
+
+    ValidationProblem:
+      allOf:
+        - $ref: '#/components/schemas/Problem'
+        - type: object
+          required: [errors]
+          properties:
+            errors:
+              type: object
+              additionalProperties:
+                type: array
+                items: { type: string }
