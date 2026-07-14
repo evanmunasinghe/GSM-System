@@ -7,15 +7,14 @@ use App\Models\Customer;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vehicle;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\View\View;
 use Stancl\Tenancy\Database\Models\Domain;
 
 class SuperAdminDashboardController extends Controller
 {
-    public function __invoke(): Response
+    public function __invoke(): View
     {
-        return Inertia::render('admin/SuperAdminDashboard', [
+        return view('admin.dashboard', [
             'workspace' => [
                 'id' => 'central',
                 'name' => 'Super Admin',

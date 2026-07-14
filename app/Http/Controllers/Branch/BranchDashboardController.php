@@ -8,18 +8,17 @@ use App\Models\Vehicle;
 use App\Models\VehicleDueRepaire;
 use App\Models\VehicleMaintainanceDue;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\View\View;
 
 class BranchDashboardController extends Controller
 {
-    public function __invoke(Request $request): Response
+    public function __invoke(Request $request): View
     {
         $page = $request->user()->isBranchAdmin()
-            ? 'branch/BranchAdminDashboard'
-            : 'dashboard/Dashboard';
+            ? 'branch.admin-dashboard'
+            : 'branch.dashboard';
 
-        return Inertia::render($page, [
+        return view($page, [
             'tenant' => [
                 'id' => tenant('id'),
                 'name' => tenant('com_name'),

@@ -1,7 +1,18 @@
 <?php
 
-test('the application returns a successful response', function () {
-    $response = $this->get('/');
+test('the welcome and login pages are separate', function () {
+    $this->get('/')
+        ->assertOk()
+        ->assertSee('Log in to FleeV')
+        ->assertDontSee('<form', false);
 
-    $response->assertStatus(200);
+    $this->get('/login')
+        ->assertOk()
+        ->assertSee('Welcome back')
+        ->assertSee('<form', false);
+});
+
+test('old and protected login paths use the shared login page', function () {
+    $this->get('/admin/login')->assertRedirect(url('/login'));
+    $this->get('/admin/dashboard')->assertRedirect(url('/login'));
 });

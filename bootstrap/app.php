@@ -1,9 +1,7 @@
 <?php
 
 use App\Http\Middleware\EnsureUserBelongsToTenant;
-use App\Http\Middleware\EnsureUserIsBranchAdmin;
 use App\Http\Middleware\EnsureUserIsSuperAdmin;
-use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,19 +14,19 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        $middleware->web(append: [
-            HandleInertiaRequests::class,
-        ]);
+        $middleware->redirectGuestsTo(function (Request $request): string {
+            $homeUrl = rtrim((string) config('app.url'), '/');
+            $port = $request->getPort();
 
-        $middleware->redirectGuestsTo(
-            fn (Request $request) => $request->is('admin/*')
-                ? route('admin.login')
-                : url('/login'),
-        );
+            if (parse_url($homeUrl, PHP_URL_PORT) === null && ! in_array($port, [80, 443], true)) {
+                $homeUrl .= ':'.$port;
+            }
+
+            return $homeUrl.'/login';
+        });
 
         $middleware->alias([
             'super.admin' => EnsureUserIsSuperAdmin::class,
-            'branch.admin' => EnsureUserIsBranchAdmin::class,
             'tenant.user' => EnsureUserBelongsToTenant::class,
         ]);
     })
