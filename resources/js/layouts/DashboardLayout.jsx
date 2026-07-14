@@ -55,7 +55,10 @@ export default function DashboardLayout({
     const dashboardHref = isAdmin ? '/admin/dashboard' : '/dashboard';
     const profileName = isAdmin
         ? authUser?.name || 'Super Administrator'
-        : context.name || 'Branch user';
+        : authUser?.name || 'Branch user';
+    const profileRole = authUser?.type
+        ? authUser.type.replaceAll('_', ' ').replace(/\b\w/g, (letter) => letter.toUpperCase())
+        : 'Branch user';
 
     useEffect(() => {
         const closeOnEscape = (event) => {
@@ -121,20 +124,14 @@ export default function DashboardLayout({
                     </nav>
 
                     <div className="dashboard-sidebar-footer">
-                        {isAdmin ? (
-                            <button
-                                className="dashboard-logout-button"
-                                type="button"
-                                onClick={() => router.post('/admin/logout')}
-                            >
-                                Sign out
-                            </button>
-                        ) : (
-                            <>
-                                <span>Need help?</span>
-                                <a href="mailto:support@gms.lk">support@gms.lk</a>
-                            </>
-                        )}
+                        <button
+                            className="dashboard-logout-button"
+                            type="button"
+                            onClick={() => router.post(isAdmin ? '/admin/logout' : '/logout')}
+                        >
+                            Sign out
+                        </button>
+                        {!isAdmin && <a href="mailto:support@fleev.lk">support@fleev.lk</a>}
                     </div>
                 </aside>
 
@@ -174,7 +171,7 @@ export default function DashboardLayout({
                                 <span>{profileName.charAt(0).toUpperCase()}</span>
                                 <div>
                                     <strong>{profileName}</strong>
-                                    <small>{isAdmin ? 'Super administrator' : 'Branch workspace'}</small>
+                                    <small>{isAdmin ? 'Super administrator' : profileRole}</small>
                                 </div>
                             </div>
                         </div>

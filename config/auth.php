@@ -119,4 +119,9 @@ return [
         'password' => env('SUPER_ADMIN_PASSWORD', 'FleeV@Admin2026!'),
     ],
 
+    'branch_admin' => [
+        'email' => env('BRANCH_ADMIN_EMAIL', 'admin@jayarathnaauto.lk'),
+        'password' => env('BRANCH_ADMIN_PASSWORD', 'Jayarathna@2026!'),
+    ],
+
 ];

@@ -12,6 +12,8 @@ class User extends Authenticatable
 {
     public const TYPE_SUPER_ADMIN = 'super_admin';
 
+    public const TYPE_BRANCH_ADMIN = 'branch_admin';
+
     /** @use HasFactory<UserFactory> */
     use BelongsToTenant, HasFactory, Notifiable;
 
@@ -43,5 +45,10 @@ class User extends Authenticatable
     public function isSuperAdmin(): bool
     {
         return $this->type === self::TYPE_SUPER_ADMIN;
+    }
+
+    public function isBranchAdmin(): bool
+    {
+        return $this->type === self::TYPE_BRANCH_ADMIN;
     }
 }

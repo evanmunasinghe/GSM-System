@@ -2,8 +2,10 @@
 
 use App\Http\Controllers\Admin\SuperAdminDashboardController;
 use App\Http\Controllers\Auth\AdminAuthController;
+use App\Models\Tenant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Stancl\Tenancy\Database\Models\Domain;
 
@@ -18,9 +20,20 @@ Route::post('/branch-portal', function (Request $request) {
         'branch' => ['required', 'string', 'max:255'],
     ]);
 
-    $branch = strtolower(trim($request->string('branch')->toString()));
-    $domainName = str_contains($branch, '.') ? $branch : $branch.'.localhost';
+    $branch = trim($request->string('branch')->toString());
+    $domainName = str_contains($branch, '.')
+        ? Str::lower($branch)
+        : Str::slug($branch).'.localhost';
     $domain = Domain::where('domain', $domainName)->first();
+
+    if (! $domain) {
+        $tenant = Tenant::query()
+            ->whereKey(Str::slug($branch))
+            ->orWhere('com_name', $branch)
+            ->first();
+
+        $domain = $tenant?->domains()->first();
+    }
 
     if (! $domain) {
         return back()

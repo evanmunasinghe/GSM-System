@@ -1,4 +1,4 @@
-import { Link, useForm, usePage } from '@inertiajs/react';
+import { useForm, usePage } from '@inertiajs/react';
 import PageStyles from '../../components/PageStyles';
 import PublicLayout from '../../components/PublicLayout';
 
@@ -45,7 +45,7 @@ export default function Login({
                                {/* {credentials && (
                                     <div className="demo-credentials">
                                         <div>
-                                            <strong>Development super admin</strong>
+                                            <strong>Demo account</strong>
                                             <span>{credentials.email}</span>
                                             <span>{credentials.password}</span>
                                         </div>
@@ -131,7 +131,7 @@ export default function Login({
                                 </form>
 
                                 <div className="login-footer text-center">
-                                    <Link href={homeUrl}>Back to Home</Link>
+                                    <a href={homeUrl}>Back to Home</a>
                                 </div>
                             </div>
                         </div>
